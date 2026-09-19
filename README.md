@@ -97,7 +97,7 @@ Records identified as exceptions were **not deleted**. Each was handled during t
 
 ### 3. City and State Standardization
 
-A `04_normalized_city_reference_table` reference table was built to normalize city names across customers, sellers, and geolocation. It handled:
+A `city_aliases` reference table was built to normalize city names across customers, sellers, and geolocation. It handled:
 
 - Punctuation and whitespace variation
 - Trailing state codes (e.g., "sao paulo sp")
@@ -142,11 +142,11 @@ A 5-page Power BI dashboard presents the findings:
 
 **3. Late delivery is geographically concentrated**
 
-**4.  Sellers identified carrying R$518,557 of GMV at risk**
+**4. 15 priority sellers represent R$518,557.64 GMV at risk**
 
-**5.  Seller risk profiles exist**
+**5.  Two distinct seller risk profiles exist (logistics failure and quality failure)**
 
-**6. Freight cost correlates with late deliveries**
+**6. Freight cost correlates monotonically with late delivery rate (6.22% → 11.13%)**
 
 ---
 
@@ -170,7 +170,7 @@ Late rate by state. Delay bucket distribution. Freight band vs late rate. Top 20
 
 Delay bucket vs average review score. Review score distribution. Poor review rate by state. Quality risk seller scatter. Answers: **what drives poor reviews, and which sellers have quality problems?**
 
-### Page 5 — [Seller Action Center](screenshots/page5-seller_action_centre.png)
+### Page 5 — [Seller Action Center](screenshots/page5-seller_action_center.png)
 
 Priority seller table with drill-through. Two-dimensional risk matrix (GMV × poor review rate). GMV at risk by state. Answers: **which sellers should Olist intervene with, and how?**
 
@@ -191,11 +191,11 @@ Priority seller table with drill-through. Two-dimensional risk matrix (GMV × po
 2. **Run the SQL scripts in order:**
 
    ```
-   sql/01_staging_schema.sql         — creates staging tables
-   sql/02_staging_ingestion.sql      — loads raw CSVs
-   sql/03_normalized_city_reference_table.sql — builds city_aliases (optional for this project but needed for `04_cleaned_schema_and_ingestion` to run)
+   sql/01_staging_schema.sql                  — creates staging tables
+   sql/02_staging_ingestion.sql               — loads raw CSVs
+   sql/03_city_aliases.sql                    — builds city_aliases (optional for this project but needed for `04_cleaned_schema_and_ingestion` to run)
    sql/04_cleaned_schema_and_ingestion.sql    — creates cleaned tables
-   sql/05_analytics_views.sql        — creates the analytical views
+   sql/05_analytics_views.sql                 — creates the analytical views
 
    ```
 
@@ -218,22 +218,21 @@ olist-ecommerce-analytics/
 ├── analytics_insights.md
 ├── powerbi/
 │   └── Olist_dashboard.pbix
-├── notebook/
+├── analysis/
 │   ├── 01_staging_data_&_business-rule__validation.sql
 │   └── 02_analytics_query_log.sql
 ├── sql/
 │   ├── 01_staging_schema.sql
 │   ├── 02_staging_ingestion.sql
-│   ├── 03_data_validation_report.sql
-│   ├── 04_normalized_city_reference_table.sql
-│   ├── 05_cleaned_schema_and_ingestion.sql
-│   └── 06_analytics_views.sql
+│   ├── 03_city_aliases.sql
+│   ├── 04_cleaned_schema_and_ingestion.sql
+│   └── 05_analytics_views.sql
 ├── screenshots/
 │   ├── page1-executive_overview.png
 │   ├── page2-sales_&_growth.png
 │   ├── page3-logistics_&_delivery_performance.png
 │   ├── page4-customer_experience.png
-│   └── page5-seller_action_centre.png
+│   └── page5-seller_action_center.png
 └── 
 ```
 ## Future Work
@@ -247,5 +246,5 @@ olist-ecommerce-analytics/
 
 ## Author
 
-**[Vivek Singh]**
+**Vivek Singh**
 [LinkedIn](https://linkedin.com/in/--vivek-singh) · [Email](mailto:imvks15@gmail.com)
