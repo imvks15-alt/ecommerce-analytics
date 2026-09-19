@@ -92,29 +92,12 @@ All raw CSVs were loaded into MySQL staging tables with every column defined as 
 
 ### 2. Data Validation
 
-Fifteen categories of checks were run against staging data:
-
-- Row counts
-- Empty string / NULL checks
-- Format validation (regex for IDs, dates, numerics)
-- Duplicate key detection
-- Date format validation
-- Chronological consistency (e.g., carrier date must not precede purchase date)
-- Business rule validation (e.g., delivered orders must have delivery dates)
-- Brazilian state code validation
-- ZIP code format validation
-- Geographic coordinate range validation
-- Foreign-key / orphan checks
-- Payment installment and value validation
-- Review score range validation
-- Product dimension validation
-- Category translation completeness
-
+Categories of checks were run against staging data validating both data and business rules.
 Records identified as exceptions were **not deleted**. Each was handled during transformation according to its business meaning.
 
 ### 3. City and State Standardization
 
-A `city_aliases` reference table was built to normalize city names across customers, sellers, and geolocation. It handled:
+A `04_normalized_city_reference_table` reference table was built to normalize city names across customers, sellers, and geolocation. It handled:
 
 - Punctuation and whitespace variation
 - Trailing state codes (e.g., "sao paulo sp")
@@ -127,14 +110,8 @@ A `city_aliases` reference table was built to normalize city names across custom
 Staging data was transformed into typed, keyed, normalized relational tables:
 
 - Proper `PRIMARY KEY`, `FOREIGN KEY`, and `UNIQUE` constraints
-- Business-rule-aware date handling:
-  - `order_approved_at < order_purchase_timestamp` → NULL
-  - `order_delivered_carrier_date < order_purchase_timestamp` → NULL
-  - `order_delivered_customer_date < order_delivered_carrier_date` → NULL
-  - Canceled / unavailable orders → delivery date NULL
-- Invalid order statuses mapped to `'unknown'`
+- Business-rule-aware date handling
 - Category translation backfilled for 2 missing categories
-- Reviews use `UNIQUE(review_id, order_id)` because 547 orders have multiple reviews
 
 ### 5. Analytical Layer
 
@@ -159,86 +136,21 @@ A 5-page Power BI dashboard presents the findings:
 
 ## Key Insights
 
-### 1. Retention is broad and marketplace-wide
+**1. Retention is marketplace-wide, not segment-specific**
 
-**3.05%** (2.14% excluding same-day order-splitting) of customers place a second order. The repeat rate varies by less than one percentage point across first-order value bands (from R$50 to R$500+), meaning the problem is **not segment-specific**. High-spending customers are, in fact, slightly *less* likely to return.
+**2. Late delivery is the strongest driver of poor reviews**
 
-**Implication:** Growth is acquisition-dependent. The 2017 growth phase worked because new customers arrived at scale — not because customers returned.
+**3. Late delivery is geographically concentrated**
 
-### 2. Late delivery is the strongest driver of poor reviews
+**4.  Sellers identified carrying R$518,557 of GMV at risk**
 
-| Delay | Avg Review | Poor Review % |
-|---|---|---|
-| On time / early | **4.29** | 9.32% |
-| 1–3 days late | 3.29 | 32.24% |
-| 4–7 days late | **2.10** | 67.96% |
-| 8–14 days late | 1.68 | 80.36% |
-| 15+ days late | 1.72 | 78.88% |
+**5.  Seller risk profiles exist**
 
-Review scores collapse sharply once an order is **4 or more days late**. Past that point, approximately **76%** of reviews are poor (score ≤ 2), versus 9.32% for on-time orders.
-
-**Implication:** The 4-day threshold is a specific, measurable operational target. Proactive customer notification around day 3 of lateness could preserve satisfaction.
-
-### 3. Late delivery is geographically concentrated
-
-| State | Late Rate | Orders |
-|---|---|---|
-| AL | 23.93% | 397 |
-| MA | 19.67% | 717 |
-| PI | 15.97% | 476 |
-| CE | 15.32% | 1,279 |
-| BA | 14.04% | 3,256 |
-| **RJ** | **13.47%** | **12,350** |
-| SP | 5.89% | 40,501 |
-
-Rio de Janeiro stands out as the largest late-rate problem among high-volume states — 12,350 orders at a 13.47% late rate, which is **2.3× São Paulo's rate**.
-
-**Implication:** RJ deserves a dedicated last-mile logistics investigation.
-
-### 4. Fifteen sellers carry R$518,557 of GMV at risk
-
-Sellers with delivered GMV ≥ R$20,000 and late rate ≥ 15% represent:
-
-| Metric | Value |
-|---|---|
-| Priority sellers | 15 |
-| Combined GMV at risk | R$518,557.64 |
-| Total orders | 2,552 |
-| Late orders | 499 |
-| Average late rate | 22.65% |
-| Average poor review rate | 29.03% |
-
-**Implication:** This is a concrete, quantified intervention list — not a general concern.
-
-### 5. Two distinct seller risk profiles exist
-
-The seller analysis revealed two patterns that require different interventions:
-
-- **Logistics failure:** High late rate (20%+), moderate review score. Products are acceptable; delivery is broken.
-- **Quality failure:** Moderate late rate (10–15%), extreme poor review rate (30–50%). Delivery works; product or service quality fails.
-
-**Example of quality failure:** A seller with R$237,562 GMV, a 13.37% late rate, and **29.35% poor reviews**. A late-rate-only filter would have missed this seller entirely.
-
-**Implication:** Seller risk scoring must use both late rate AND poor review rate.
-
-### 6. Freight correlates with lateness
-
-Late delivery rates rise steadily with freight cost:
-
-| Freight band | Late rate |
-|---|---|
-| ≤ R$10 | 6.22% |
-| R$11–20 | 7.78% |
-| R$21–30 | 9.07% |
-| R$31–50 | 9.26% |
-| R$51–100 | 9.64% |
-| R$100+ | 11.13% |
-
-**Implication:** Higher-freight customers are already paying more for shipping — and are also more likely to experience late delivery. This compounds the customer experience problem.
+**6. Freight cost correlates with late deliveries**
 
 ---
 
-## [Dashboard](powerbi/Olist_dashboard.pbix)
+## Dashboard
 
 The Power BI dashboard has five pages, each focused on a different layer of the business.
 
@@ -254,7 +166,7 @@ Category, state, and time breakdowns. AOV by category. 2017 vs 2018 monthly comp
 
 Late rate by state. Delay bucket distribution. Freight band vs late rate. Top 20 late-rate sellers. Answers: **where is late delivery concentrated and what drives it?**
 
-### Page 4 — ![Customer Experience](screenshots/page4-customer-experience.png)
+### Page 4 — [Customer Experience](screenshots/page4-customer-experience.png)
 
 Delay bucket vs average review score. Review score distribution. Poor review rate by state. Quality risk seller scatter. Answers: **what drives poor reviews, and which sellers have quality problems?**
 
@@ -295,26 +207,6 @@ Priority seller table with drill-through. Two-dimensional risk matrix (GMV × po
    - Refresh the data
 
 4. **Explore the dashboard** — 5 pages, with slicers and drill-through enabled.
-
----
-
-## Result Conclusion
-
-The analysis confirms that Olist's growth plateau in 2018 was not caused by a marketing failure or market saturation. It was caused by a **customer experience problem** that prevents repeat purchasing:
-
-- 96.95% of customers buy once and never return
-- Late delivery — which affects 8.11% of orders — is associated with a **2.19-point drop** in average review score
-- The late-delivery problem is concentrated: 15 sellers, a handful of states, and high-freight orders
-- The customers most affected are also the ones paying the most for shipping
-
-The findings point to a clear conclusion: **improving delivery performance is the single highest-leverage operational improvement Olist can make.** Late delivery is not just an operational metric — it drives poor reviews, which drive non-return, which drives the retention problem that limits growth.
-
-The recommendations are:
-
-1. **Prioritize the 15 identified high-revenue sellers** for operational intervention
-2. **Investigate Rio de Janeiro last-mile logistics** (13.47% late rate on 12,350 orders)
-3. **Target a 4-day maximum delivery delay** — past that, satisfaction is unrecoverable
-4. **Reframe retention as a delivery problem** — the 3.05% repeat rate is an experience issue, not a marketing issue
 
 ---
 
