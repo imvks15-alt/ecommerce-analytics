@@ -150,8 +150,8 @@ Forty-plus SQL queries computed the metrics behind each finding. Four reusable v
 A 5-page Power BI dashboard presents the findings:
 
 - Star schema with `dim_date` marked as the date table
-- Eight Many-to-1 relationships
-- Twenty-nine DAX measures (sales, delivery, reviews, retention, risk, time intelligence)
+- Many-to-1 relationships
+- DAX measures (sales, delivery, reviews, retention, risk, time intelligence)
 - Conditional formatting to signal risk
 - Drill-through from the Priority Seller table to seller detail
 
@@ -161,7 +161,7 @@ A 5-page Power BI dashboard presents the findings:
 
 ### 1. Retention is broad and marketplace-wide
 
-Only **3.05%** of customers place a second order. The repeat rate varies by less than one percentage point across first-order value bands (from R$50 to R$500+), meaning the problem is **not segment-specific**. High-spending customers are, in fact, slightly *less* likely to return.
+**3.05%** (2.14% excluding same-day order-splitting) of customers place a second order. The repeat rate varies by less than one percentage point across first-order value bands (from R$50 to R$500+), meaning the problem is **not segment-specific**. High-spending customers are, in fact, slightly *less* likely to return.
 
 **Implication:** Growth is acquisition-dependent. The 2017 growth phase worked because new customers arrived at scale — not because customers returned.
 
@@ -238,27 +238,27 @@ Late delivery rates rise steadily with freight cost:
 
 ---
 
-## Dashboard
+## [Dashboard](powerbi/Olist_dashboard.pbix)
 
 The Power BI dashboard has five pages, each focused on a different layer of the business.
 
-### Page 1 — Executive Overview
+### Page 1 — [Executive Overview](screenshots/page1-executive_overview.png)
 
 Six KPI cards (GMV, orders, AOV, average review, late rate, repeat rate), monthly GMV and orders trends, top categories, order status distribution, and a Key Insights panel. Answers: **how is the marketplace performing right now?**
 
-### Page 2 — Sales & Growth
+### Page 2 — [Sales & Growth](screenshots/page2-sales_&_growth.png)
 
 Category, state, and time breakdowns. AOV by category. 2017 vs 2018 monthly comparison. Answers: **where is revenue coming from, and how has it evolved?**
 
-### Page 3 — Logistics
+### Page 3 — [Logistics](screenshots/page3-logistics_&_delivery_performance.png)
 
 Late rate by state. Delay bucket distribution. Freight band vs late rate. Top 20 late-rate sellers. Answers: **where is late delivery concentrated and what drives it?**
 
-### Page 4 — Customer Experience
+### Page 4 — ![Customer Experience](screenshots/page4-customer-experience.png)
 
 Delay bucket vs average review score. Review score distribution. Poor review rate by state. Quality risk seller scatter. Answers: **what drives poor reviews, and which sellers have quality problems?**
 
-### Page 5 — Seller Action Center
+### Page 5 — [Seller Action Center](screenshots/page5-seller_action_centre.png)
 
 Priority seller table with drill-through. Two-dimensional risk matrix (GMV × poor review rate). GMV at risk by state. Answers: **which sellers should Olist intervene with, and how?**
 
@@ -281,7 +281,7 @@ Priority seller table with drill-through. Two-dimensional risk matrix (GMV × po
    ```
    sql/01_staging_schema.sql         — creates staging tables
    sql/02_staging_ingestion.sql      — loads raw CSVs
-   sql/03_normalized_city_reference_table.sql — builds city_aliases
+   sql/03_normalized_city_reference_table.sql — builds city_aliases (optional for this project but needed for `04_cleaned_schema_and_ingestion` to run)
    sql/04_cleaned_schema_and_ingestion.sql    — creates cleaned tables
    sql/05_analytics_views.sql        — creates the analytical views
 
@@ -290,7 +290,7 @@ Priority seller table with drill-through. Two-dimensional risk matrix (GMV × po
    Update the `LOAD DATA LOCAL INFILE` paths in `02_staging_ingestion.sql` to point to the CSV files on your machine.
 
 3. **Open the Power BI file:**
-   - `powerbi/Olist_Analytics_Final.pbix`
+   - `powerbi/Olist_dashboard.pbix`
    - Update the MySQL connection to your local instance
    - Refresh the data
 
@@ -323,30 +323,34 @@ The recommendations are:
 ```
 olist-ecommerce-analytics/
 ├── README.md
-├── OLIST_ANALYTICS_INSIGHT.md
+├── analytics_insights.md
+├── powerbi/
+│   └── Olist_dashboard.pbix
 ├── notebook/
-│   ├── 03_data_validation_report.sql
-│   └── 06_analytics_query_log.sql
+│   ├── 01_staging_data_&_business-rule__validation.sql
+│   └── 02_analytics_query_log.sql
 ├── sql/
 │   ├── 01_staging_schema.sql
 │   ├── 02_staging_ingestion.sql
 │   ├── 03_data_validation_report.sql
 │   ├── 04_normalized_city_reference_table.sql
 │   ├── 05_cleaned_schema_and_ingestion.sql
-│   ├── 06_analytics_query_log.sql
-│   └── 07_analytics_views.sql
-├── powerbi/
-│   └── Olist_Analytics_Final.pbix
+│   └── 06_analytics_views.sql
 ├── screenshots/
-│   ├── page1-executive.png
-│   ├── page2-sales.png
-│   ├── page3-logistics.png
-│   ├── page4-customer-experience.png
-│   └── page5-seller-action.png
-└── data/
-    └── README.md
+│   ├── page1-executive_overview.png
+│   ├── page2-sales_&_growth.png
+│   ├── page3-logistics_&_delivery_performance.png
+│   ├── page4-customer_experience.png
+│   └── page5-seller_action_centre.png
+└── 
 ```
-
+## Future Work
+  - **Payment Behavior Analysis**
+  - **Seller Lifecycle Analysis**
+  - **Order Lifecycle Analysis**
+  - **Geographic Drill-Down to City Level**
+  - **Review Response Time affecting customer retention**
+  - **Marketing funnel analysis**
 ---
 
 ## Author
